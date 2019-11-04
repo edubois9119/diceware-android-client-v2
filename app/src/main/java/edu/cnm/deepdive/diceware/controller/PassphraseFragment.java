@@ -17,6 +17,7 @@ package edu.cnm.deepdive.diceware.controller;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,6 +40,7 @@ public class PassphraseFragment extends DialogFragment {
   private Passphrase passphrase;
   private EditText passphraseKey;
   private EditText passphraseWords;
+  private CheckBox regenerate;
 
   /**
    * Creates and returns an instance of {@link PassphraseFragment} for editing a new passphrase.
@@ -80,6 +82,7 @@ public class PassphraseFragment extends DialogFragment {
     View view = getActivity().getLayoutInflater().inflate(R.layout.fragment_passphrase, null);
     passphraseKey = view.findViewById(R.id.passphrase_key);
     passphraseWords = view.findViewById(R.id.passphrase_words);
+    regenerate = view.findViewById(R.id.regenerate);
     passphrase = (Passphrase) getArguments().getSerializable("passphrase");
     if (passphrase == null) {
       passphrase = new Passphrase();
@@ -107,30 +110,31 @@ public class PassphraseFragment extends DialogFragment {
           .trim()
           .replaceAll("\\s*,\\s+", " "));
     }
+    regenerate.setEnabled(passphrase.getId() != 0);
   }
-
   private void populatePassphrase() {
     passphrase.setKey(passphraseKey.getText().toString().trim());
     String words = passphraseWords.getText().toString().trim();
     passphrase.setWords(words.isEmpty() ? null : Arrays.asList(words.split("\\s+")));
-    ((OnCompleteListener) getActivity()).updatePassphrase(passphrase);
+    ((OnCompleteListener) getActivity()).updatePassphrase(
+        passphrase, regenerate.isChecked(), 6);
   }
+
+/**
+ * Declares a {@link #updatePassphrase(Passphrase)} method that receives the {@link Passphrase}
+ * instance on completion of editing. The host activity for the {@link PassphraseFragment}
+ * instance <strong>must</strong> implement this interface.
+ */
+@FunctionalInterface
+public interface OnCompleteListener {
 
   /**
-   * Declares a {@link #updatePassphrase(Passphrase)} method that receives the {@link Passphrase}
-   * instance on completion of editing. The host activity for the {@link PassphraseFragment}
-   * instance <strong>must</strong> implement this interface.
+   * Performs any necessary model updates for the specified passphrase.
+   *
+   * @param passphrase edited {@link Passphrase} instance.
    */
-  @FunctionalInterface
-  public interface OnCompleteListener {
+  void updatePassphrase(Passphrase passphrase, boolean regenerate, int length);
 
-    /**
-     * Performs any necessary model updates for the specified passphrase.
-     *
-     * @param passphrase edited {@link Passphrase} instance.
-     */
-    void updatePassphrase(Passphrase passphrase);
-
-  }
+}
 
 }
